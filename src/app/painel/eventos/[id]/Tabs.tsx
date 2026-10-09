@@ -7,6 +7,7 @@ const tabs = [
   ["", "Resumo"],
   ["/ingressos", "Ingressos e lotes"],
   ["/cupons", "Cupons"],
+  ["/lista", "Lista"],
   ["/pedidos", "Pedidos"],
   ["/checkin", "Check-in"],
   ["/editar", "Editar"],

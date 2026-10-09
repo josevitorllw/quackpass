@@ -3,17 +3,19 @@
 import { useState } from "react";
 import { Scanner } from "@/components/checkin/Scanner";
 import { BuyerList } from "./BuyerList";
+import { DoorList } from "./DoorList";
 
 /** Tela da portaria: leitor de QR e lista de compradores. */
-export function Door({ eventId, initialUsed, total }: { eventId: string; initialUsed: number; total: number }) {
-  const [tab, setTab] = useState<"scan" | "list">("scan");
+export function Door({ eventId, initialUsed, total, hasList }: { eventId: string; initialUsed: number; total: number; hasList: boolean }) {
+  const [tab, setTab] = useState<"scan" | "list" | "door">("scan");
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-1 rounded-xl bg-slate-900 p-1" role="tablist">
+      <div className={`grid gap-1 rounded-xl bg-slate-900 p-1 ${hasList ? "grid-cols-3" : "grid-cols-2"}`} role="tablist">
         {(
           [
-            ["scan", "Ler QR Code"],
-            ["list", "Lista de compradores"],
+            ["scan", "Ler QR"],
+            ["list", "Compradores"],
+            ...(hasList ? ([["door", "Lista / Porta"]] as const) : []),
           ] as const
         ).map(([k, label]) => (
           <button
@@ -32,6 +34,7 @@ export function Door({ eventId, initialUsed, total }: { eventId: string; initial
         <Scanner eventId={eventId} initialUsed={initialUsed} total={total} />
       </div>
       {tab === "list" && <BuyerList eventId={eventId} />}
+      {tab === "door" && <DoorList eventId={eventId} />}
     </div>
   );
 }

@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { EventView } from "@/components/EventView";
+import { ListCta } from "@/components/ListCta";
+import { brl, dateTime } from "@/lib/format";
+import { listOpen } from "@/lib/guestlist";
 import { db } from "@/lib/db";
 import { checkoutConfig, ticketTypesForCheckout } from "@/lib/event-page";
 import { Checkout } from "./Checkout";
@@ -47,13 +50,20 @@ export default async function EventPage({ params }: { params: { slug: string } }
       event={event}
       producer={event.producer}
       sidebar={
-        salesOpen ? (
-          <Suspense fallback={<div className="card h-64 animate-pulse" />}>
-            <Checkout eventId={event.id} ticketTypes={ticketTypesForCheckout(event.ticketTypes)} feePayer={event.feePayer} {...checkoutConfig()} />
-          </Suspense>
-        ) : (
-          <div className="card text-slate-600">{ended ? "As vendas deste evento foram encerradas." : "Vendas indisponíveis."}</div>
-        )
+        <>
+          {salesOpen ? (
+            <Suspense fallback={<div className="card h-64 animate-pulse" />}>
+              <Checkout eventId={event.id} ticketTypes={ticketTypesForCheckout(event.ticketTypes)} feePayer={event.feePayer} {...checkoutConfig()} />
+            </Suspense>
+          ) : (
+            <div className="card text-slate-600">{ended ? "As vendas deste evento foram encerradas." : "Vendas indisponíveis."}</div>
+          )}
+          {listOpen(event).open && event.listPublicSignup && event.listPriceCents != null && (
+            <Suspense>
+              <ListCta slug={event.slug} priceLabel={brl(event.listPriceCents)} untilLabel={event.listValidUntil ? dateTime(event.listValidUntil) : null} />
+            </Suspense>
+          )}
+        </>
       }
     />
   );

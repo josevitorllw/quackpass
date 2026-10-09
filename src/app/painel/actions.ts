@@ -12,6 +12,8 @@ import { contentSchema, ACCENT_COLORS } from "@/lib/content";
 import { onlyDigits, parseLocalDateTime, parseMoney, slugify } from "@/lib/format";
 import { sendTicketsEmail } from "@/lib/email";
 import { cancelEvent, refundOrder, RefundError } from "@/lib/orders";
+import { addNames, ListError, newAccessToken, newPublicCode } from "@/lib/guestlist";
+import { listResultMessage } from "@/lib/list-messages";
 import bcrypt from "bcryptjs";
 import { createPagarmeRecipient } from "@/lib/payments/pagarme";
 
@@ -216,6 +218,8 @@ export async function createAdvertiser(_prev: ActionState, form: FormData): Prom
   if (name.length < 2) return { error: "Informe o nome do anunciante" };
   const commission = parseCommission(form);
   if (commission && "error" in commission) return { error: commission.error };
+  const list = parseCommission(form, "listCommission");
+  if (list && "error" in list) return { error: list.error };
   const clean = (k: string) => String(form.get(k) ?? "").trim() || null;
   await db.advertiser.create({
     data: {
@@ -225,6 +229,9 @@ export async function createAdvertiser(_prev: ActionState, form: FormData): Prom
       phone: clean("phone"),
       instagram: clean("instagram"),
       ...(commission ?? {}),
+      ...(list ? { listCommissionType: list.commissionType, listCommissionValue: list.commissionValue } : {}),
+      accessToken: newAccessToken(),
+      publicCode: newPublicCode(name),
     },
   });
   revalidatePath("/painel/anunciantes");
@@ -237,7 +244,16 @@ export async function updateAdvertiserCommission(advertiserId: string, _prev: Ac
   if (!adv) return { error: "Anunciante não encontrado" };
   const commission = parseCommission(form) ?? { commissionType: "PERCENT" as const, commissionValue: 0 };
   if ("error" in commission) return { error: commission.error };
-  await db.advertiser.update({ where: { id: adv.id }, data: commission });
+  const list = parseCommission(form, "listCommission");
+  if (list && "error" in list) return { error: list.error };
+  await db.advertiser.update({
+    where: { id: adv.id },
+    data: {
+      ...commission,
+      listCommissionType: list ? list.commissionType : null,
+      listCommissionValue: list ? list.commissionValue : null,
+    },
+  });
   revalidatePath("/painel/anunciantes");
   return { ok: "Comissão atualizada. Vale para as próximas vendas." };
 }
@@ -431,4 +447,70 @@ export async function resetStaffPassword(staffId: string, _prev: ActionState, fo
   if (password.length < 6) return { error: "Senha com pelo menos 6 caracteres" };
   await db.staffMember.update({ where: { id: st.id }, data: { passwordHash: await bcrypt.hash(password, 10) } });
   return { ok: "Senha alterada" };
+}
+
+// ---------- Lista de nomes ----------
+
+export async function updateListSettings(eventId: string, _prev: ActionState, form: FormData): Promise<ActionState> {
+  const { event } = await requireOwnedEvent(eventId);
+  const money = (k: string) => {
+    const v = String(form.get(k) ?? "").trim();
+    return v ? parseMoney(v) : null;
+  };
+  const listPriceCents = money("listPrice");
+  const doorPriceCents = money("doorPrice");
+  const enabled = form.get("listEnabled") === "on";
+  if (enabled && (listPriceCents == null || !Number.isFinite(listPriceCents))) return { error: "Informe o valor para quem está na lista" };
+  if (doorPriceCents != null && !Number.isFinite(doorPriceCents)) return { error: "Valor na porta inválido" };
+  const max = String(form.get("listMaxPerPromoter") ?? "").trim();
+  await db.event.update({
+    where: { id: event.id },
+    data: {
+      listEnabled: enabled,
+      listPriceCents,
+      doorPriceCents,
+      listValidUntil: parseLocalDateTime(String(form.get("listValidUntil") ?? "")),
+      listClosesAt: parseLocalDateTime(String(form.get("listClosesAt") ?? "")),
+      listMaxPerPromoter: max ? Math.max(1, Math.round(Number(max))) || null : null,
+      listPublicSignup: form.get("listPublicSignup") === "on",
+    },
+  });
+  revalidatePath(`/evento/${event.slug}`);
+  revalidatePath(`/painel/eventos/${event.id}/lista`);
+  return { ok: enabled ? "Lista ativada e salva" : "Configurações salvas (lista desativada)" };
+}
+
+export async function addListNamesAction(eventId: string, _prev: ActionState, form: FormData): Promise<ActionState> {
+  const { producer, event } = await requireOwnedEvent(eventId);
+  const advertiserId = String(form.get("advertiserId") ?? "") || null;
+  if (advertiserId && !(await db.advertiser.findFirst({ where: { id: advertiserId, producerId: producer.id } }))) {
+    return { error: "Promoter inválido" };
+  }
+  try {
+    const r = await addNames({ eventId: event.id, advertiserId, names: String(form.get("names") ?? "").split("\n"), source: "PRODUCER" });
+    revalidatePath(`/painel/eventos/${event.id}/lista`);
+    return { ok: listResultMessage(r) };
+  } catch (err) {
+    return { error: err instanceof ListError ? err.message : "Erro ao adicionar nomes" };
+  }
+}
+
+export async function removeListEntryAction(eventId: string, entryId: string) {
+  await requireOwnedEvent(eventId);
+  // Quem já entrou não sai da lista (o registro de entrada e a comissão dependem dele)
+  await db.guestListEntry.deleteMany({ where: { id: entryId, eventId, doorSale: null } });
+  revalidatePath(`/painel/eventos/${eventId}/lista`);
+}
+
+export async function regenerateAdvertiserLink(advertiserId: string) {
+  const producer = await requireProducer();
+  await db.advertiser.updateMany({ where: { id: advertiserId, producerId: producer.id }, data: { accessToken: newAccessToken() } });
+  revalidatePath("/painel/anunciantes");
+}
+
+export async function toggleAdvertiser(advertiserId: string) {
+  const producer = await requireProducer();
+  const adv = await db.advertiser.findFirst({ where: { id: advertiserId, producerId: producer.id } });
+  if (adv) await db.advertiser.update({ where: { id: adv.id }, data: { active: !adv.active } });
+  revalidatePath("/painel/anunciantes");
 }

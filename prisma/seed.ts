@@ -77,6 +77,11 @@ async function main() {
       contactInstagram: "folksbar",
       refundMode: "SELF_SERVICE",
       refundDeadlineHours: 48,
+      // Lista: R$ 20 na porta até 2h30 depois do início; sem lista, R$ 50
+      listEnabled: true,
+      listPriceCents: 2000,
+      doorPriceCents: 5000,
+      listValidUntil: new Date(startsAt.getTime() + 2.5 * 3_600_000),
       content: [
         {
           type: "lineup",
@@ -121,7 +126,18 @@ async function main() {
 
   // Wesley ganha 10% por venda
   const wesley = await db.advertiser.create({
-    data: { producerId: producer.id, name: "Wesley Promoter", instagram: "@wesley", commissionType: "PERCENT", commissionValue: 1000 },
+    data: {
+      producerId: producer.id,
+      name: "Wesley Promoter",
+      instagram: "@wesley",
+      commissionType: "PERCENT",
+      commissionValue: 1000,
+      // Na lista: R$ 3,00 por pessoa que entrar
+      listCommissionType: "FIXED",
+      listCommissionValue: 300,
+      accessToken: "demo-wesley-link-secreto",
+      publicCode: "wesley",
+    },
   });
   await db.coupon.create({ data: { eventId: event.id, advertiserId: wesley.id, code: "WESLEY", discountType: "PERCENT", value: 10 } });
   console.log("Seed ok:", event.slug);

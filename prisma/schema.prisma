@@ -52,6 +52,14 @@ enum OrderStatus {
   REFUNDED
 }
 
+/// Como a pessoa pagou na porta (fora do site)
+enum DoorPaymentMethod {
+  CASH
+  PIX
+  CARD
+  FREE
+}
+
 enum PaymentMethod {
   PIX
   CREDIT_CARD
@@ -133,6 +141,21 @@ model Event {
   contactEmail     String?
   contactInstagram String?
 
+  /// Lista de nomes (desconto pagando na porta)
+  listEnabled        Boolean   @default(false)
+  /// Valor para quem está na lista (pago na porta)
+  listPriceCents     Int?
+  /// Valor na porta para quem não está na lista (ou chegou depois do horário da lista)
+  doorPriceCents     Int?
+  /// O nome na lista vale até este horário
+  listValidUntil     DateTime?
+  /// Até quando dá para colocar nomes
+  listClosesAt       DateTime?
+  /// Limite de nomes por promoter (vazio = sem limite)
+  listMaxPerPromoter Int?
+  /// A própria pessoa pode colocar o nome pelo link público do promoter
+  listPublicSignup   Boolean   @default(true)
+
   refundMode          RefundMode @default(PRODUCER)
   /// Reembolso permitido até X horas antes do início
   refundDeadlineHours Int        @default(48)
@@ -144,6 +167,8 @@ model Event {
   coupons     Coupon[]
   orders      Order[]
   tickets     Ticket[]
+  guestList   GuestListEntry[]
+  doorSales   DoorSale[]
 
   @@index([producerId])
   @@index([status, startsAt])
@@ -197,11 +222,22 @@ model Advertiser {
   /// PERCENT: em centésimos de % (750 = 7,5%) sobre o valor dos ingressos. FIXED: centavos por ingresso.
   commissionType  DiscountType @default(PERCENT)
   commissionValue Int          @default(0)
+  /// Comissão de quem entrou pela lista / indicado na porta. FIXED = centavos por pessoa que entrou.
+  /// Vazio = usa a comissão padrão acima.
+  listCommissionType  DiscountType?
+  listCommissionValue Int?
+  /// Link secreto da área do promoter (funciona como senha)
+  accessToken String   @unique
+  /// Código do link público onde a própria pessoa coloca o nome na lista do promoter
+  publicCode  String   @unique
+  active      Boolean  @default(true)
   createdAt  DateTime @default(now())
 
-  producer Producer @relation(fields: [producerId], references: [id])
-  coupons  Coupon[]
-  orders   Order[]
+  producer  Producer         @relation(fields: [producerId], references: [id])
+  coupons   Coupon[]
+  orders    Order[]
+  guestList GuestListEntry[]
+  doorSales DoorSale[]
 
   @@index([producerId])
 }
@@ -385,4 +421,51 @@ model PasswordResetToken {
   producer Producer @relation(fields: [producerId], references: [id], onDelete: Cascade)
 
   @@index([producerId])
+}
+
+/// Nome na lista de um evento (colocado pelo promoter, pela própria pessoa ou pelo produtor)
+model GuestListEntry {
+  id           String   @id @default(cuid())
+  eventId      String
+  /// Promoter dono do nome (vazio = lista da casa)
+  advertiserId String?
+  name         String
+  /// Nome normalizado (sem acento, minúsculo) para busca e para evitar duplicados
+  nameKey      String
+  phone        String?
+  /// PROMOTER | PUBLIC | PRODUCER
+  source       String
+  createdAt    DateTime @default(now())
+
+  event      Event       @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  advertiser Advertiser? @relation(fields: [advertiserId], references: [id])
+  doorSale   DoorSale?
+
+  @@unique([eventId, advertiserId, nameKey])
+  @@index([eventId, nameKey])
+  @@index([advertiserId])
+}
+
+/// Entrada registrada na portaria com pagamento fora do site (balcão): pela lista ou venda na porta
+model DoorSale {
+  id               String            @id @default(cuid())
+  eventId          String
+  /// Se veio da lista. Único: o mesmo nome não entra duas vezes.
+  guestListEntryId String?           @unique
+  /// Promoter que recebe a comissão (o dono do nome, ou quem a pessoa disse na porta)
+  advertiserId     String?
+  name             String
+  amountCents      Int
+  method           DoorPaymentMethod
+  commissionCents  Int               @default(0)
+  /// Quem registrou na portaria
+  staffName        String
+  createdAt        DateTime          @default(now())
+
+  event          Event           @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  guestListEntry GuestListEntry? @relation(fields: [guestListEntryId], references: [id])
+  advertiser     Advertiser?     @relation(fields: [advertiserId], references: [id])
+
+  @@index([eventId, createdAt])
+  @@index([advertiserId])
 }

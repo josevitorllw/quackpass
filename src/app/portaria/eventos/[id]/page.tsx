@@ -20,7 +20,7 @@ export default async function StaffEventPage({ params }: { params: { id: string 
     <div>
       <TopBar title={event.title} subtitle={dateTime(event.startsAt)} back="/portaria/eventos" />
       <main className="mx-auto max-w-2xl px-4 py-4">
-        <Door eventId={event.id} initialUsed={used} total={total} />
+        <Door eventId={event.id} initialUsed={used} total={total} hasList={event.listEnabled} />
       </main>
     </div>
   );
