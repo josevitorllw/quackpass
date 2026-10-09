@@ -75,30 +75,43 @@ Exemplo: ingresso de R$ 50 com taxa paga pelo comprador → comprador paga R$ 55
 3. **Imagens:** hoje ficam no Postgres (tabela `Upload`) e são servidas com cache imutável de 1 ano, então uma CDN (Cloudflare, Vercel) absorve quase todo o tráfego. Com muito volume, migre para S3/R2 trocando `src/app/api/uploads`.
 4. **Fila de e-mail:** hoje o e-mail sai na mesma requisição que confirma o pagamento (uma falha no envio nunca derruba o pagamento). Com muito volume, mova o envio para uma fila (ex.: Inngest, BullMQ).
 
-## Rodando localmente
+## Rodando no seu computador
 
-Requisitos: Node 20+ e Postgres 14+ (ou Docker).
+Você precisa instalar uma vez:
+- **Node.js 20 ou mais novo**: https://nodejs.org (versão LTS)
+- **Docker Desktop**: https://www.docker.com/products/docker-desktop (roda o banco de dados)
+
+Depois:
+
+1. Baixe o projeto: no GitHub, botão verde **Code → Download ZIP**, e descompacte. (Ou `git clone https://github.com/josevitorllw/quackpass.git`.)
+2. Abra o **Docker Desktop** e deixe ele aberto.
+3. Abra um terminal **dentro da pasta do projeto** (no Windows: abra a pasta, clique na barra de endereço, digite `cmd` e Enter).
+4. Rode, um de cada vez:
 
 ```bash
-cp .env.example .env          # ajuste AUTH_SECRET
-npm install
-npx prisma migrate deploy     # cria as tabelas
-npm run db:seed               # dados de demonstração (logins abaixo)
-npm run dev                   # http://localhost:3000
+docker compose up -d db        # liga o banco de dados
+copy .env.example .env         # Windows  (no Mac/Linux: cp .env.example .env)
+npm install                    # instala as dependências (só na primeira vez)
+npx prisma migrate deploy      # cria as tabelas
+npm run db:seed                # cria os dados de demonstração
+npm run dev                    # liga o site
 ```
 
-Com Docker: `docker compose up --build`.
+5. Abra **http://localhost:3000** no navegador.
+
+Para desligar: `Ctrl + C` no terminal. Para ligar de novo outro dia: abra o Docker Desktop, rode `docker compose up -d db` e `npm run dev`.
+
+Neste modo nada é cobrado de verdade:
+- **Pix:** a tela do pedido mostra o botão "[DEV] Simular pagamento".
+- **Cartão:** qualquer número é aprovado; números terminados em `0002` são recusados.
+- **E-mails:** não são enviados, aparecem no terminal.
 
 Logins de demonstração:
 - Produtor: `produtor@demo.com` / `demo12345` em `/painel` (há também um cadastro pendente, `novacasa@demo.com`)
 - Admin: `admin@demo.com` / `admin12345` em `/admin`
 - Portaria: `folks.porta` / `porta123` em `/portaria`
 
-Sem `SMTP_URL`, os e-mails não são enviados: aparecem no log (e, com `EMAIL_PREVIEW_DIR`, são salvos como HTML para você abrir no navegador).
-
-Com `PAYMENT_PROVIDER="mock"` (padrão) nada é cobrado de verdade:
-- **Pix:** a tela do pedido mostra o botão "[DEV] Simular pagamento".
-- **Cartão:** qualquer número é aprovado; números terminados em `0002` são recusados.
+Para ver o conteúdo dos e-mails, defina `EMAIL_PREVIEW_DIR` no `.env` (ex.: `EMAIL_PREVIEW_DIR="emails"`): cada e-mail é salvo como HTML nessa pasta.
 
 Demo: `http://localhost:3000/evento/4-anos-folks-curitiba?cupom=WESLEY`
 
