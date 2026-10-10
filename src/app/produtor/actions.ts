@@ -12,6 +12,7 @@ import { safely, sendLeadReceivedEmail, sendNewLeadEmail, sendPasswordResetEmail
 import { env } from "@/lib/env";
 import { onlyDigits } from "@/lib/format";
 import { clientIp, rateLimit } from "@/lib/ratelimit";
+import { markSplash } from "@/lib/splash";
 
 function ip() {
   return clientIp(new Request("http://x", { headers: headers() }));
@@ -60,6 +61,7 @@ export async function login(_prev: ActionState, form: FormData): Promise<ActionS
   if (!producer || !(await bcrypt.compare(password, producer.passwordHash))) return { error: "E-mail ou senha incorretos" };
   if (producer.status === "BLOCKED") return { error: `Acesso bloqueado. Fale com ${env.supportEmail}.` };
   await createSession("producer", producer.id);
+  markSplash();
   redirect(producer.status === "APPROVED" ? "/painel" : "/produtor/aguardando");
 }
 

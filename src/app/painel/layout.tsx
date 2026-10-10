@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { AreaHeader } from "@/components/AreaHeader";
+import { DuckSplash } from "@/components/DuckSplash";
 import { requireProducer } from "@/lib/auth";
 import { env } from "@/lib/env";
+import { splashPending } from "@/lib/splash";
 import { logout } from "../produtor/actions";
 
 export const dynamic = "force-dynamic";
@@ -18,6 +20,7 @@ export default async function PanelLayout({ children }: { children: React.ReactN
   const producer = await requireProducer();
   return (
     <div className="min-h-screen">
+      <DuckSplash show={splashPending()} name={producer.contactName?.split(" ")[0] || producer.name} />
       <AreaHeader label="Área do produtor" home="/painel">
         {NAV.map(([href, label]) => (
           <Link key={href} href={href} className="rounded-lg px-3 py-2 font-medium text-slate-700 hover:bg-slate-100">

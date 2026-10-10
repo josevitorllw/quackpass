@@ -7,6 +7,7 @@ import type { ActionState } from "@/components/ActionForm";
 import { createSession, destroySession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { clientIp, rateLimit } from "@/lib/ratelimit";
+import { markSplash } from "@/lib/splash";
 
 export async function staffLogin(_prev: ActionState, form: FormData): Promise<ActionState> {
   const ip = clientIp(new Request("http://x", { headers: headers() }));
@@ -18,6 +19,7 @@ export async function staffLogin(_prev: ActionState, form: FormData): Promise<Ac
   if (!staff.active || staff.producer.status !== "APPROVED") return { error: "Acesso desativado. Fale com o responsável pela casa." };
   await db.staffMember.update({ where: { id: staff.id }, data: { lastLoginAt: new Date() } });
   await createSession("staff", staff.id);
+  markSplash();
   redirect("/portaria/eventos");
 }
 

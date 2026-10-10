@@ -11,6 +11,7 @@ import { db } from "@/lib/db";
 import { safely, sendProducerApprovedEmail } from "@/lib/email";
 import { cancelEvent, refundOrder, RefundError } from "@/lib/orders";
 import { clientIp, rateLimit } from "@/lib/ratelimit";
+import { markSplash } from "@/lib/splash";
 
 export async function adminLogin(_prev: ActionState, form: FormData): Promise<ActionState> {
   const ip = clientIp(new Request("http://x", { headers: headers() }));
@@ -19,6 +20,7 @@ export async function adminLogin(_prev: ActionState, form: FormData): Promise<Ac
   const admin = await db.adminUser.findUnique({ where: { email } });
   if (!admin || !(await bcrypt.compare(String(form.get("password") ?? ""), admin.passwordHash))) return { error: "E-mail ou senha incorretos" };
   await createSession("admin", admin.id);
+  markSplash();
   redirect("/admin");
 }
 
