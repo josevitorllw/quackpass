@@ -50,3 +50,19 @@ export const IdIcon = ({ className = "h-5 w-5" }: P) =>
   ));
 export const PhoneIcon = ({ className = "h-4 w-4" }: P) =>
   base(className, <path d="M5 4h4l2 5-2.5 1.5a11 11 0 005 5L15 13l5 2v4a2 2 0 01-2 2A16 16 0 013 6a2 2 0 012-2z" />);
+
+export const TicketIcon = ({ className = "h-5 w-5" }: P) =>
+  base(className, (
+    <>
+      <path d="M2 9a3 3 0 010 6v2a2 2 0 002 2h16a2 2 0 002-2v-2a3 3 0 010-6V7a2 2 0 00-2-2H4a2 2 0 00-2 2z" />
+      <path d="M13 5v2M13 17v2M13 11v2" />
+    </>
+  ));
+export const ChevronIcon = ({ className = "h-5 w-5" }: P) => base(className, <path d="M9 6l6 6-6 6" />);
+export const TagIcon = ({ className = "h-5 w-5" }: P) =>
+  base(className, (
+    <>
+      <path d="M20.6 13.4l-7.2 7.2a2 2 0 01-2.8 0L3 13V3h10l7.6 7.6a2 2 0 010 2.8z" />
+      <circle cx="7.5" cy="7.5" r="1.2" />
+    </>
+  ));

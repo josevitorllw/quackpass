@@ -47,3 +47,12 @@ export function toLocalInput(d: Date | null | undefined): string {
   const local = new Date(d.getTime() - 3 * 60 * 60 * 1000);
   return local.toISOString().slice(0, 16);
 }
+
+/** Dia e mês abreviado em Brasília, para o selo de data dos cards: { day: "12", month: "OUT" } */
+export function dayMonth(d: Date): { day: string; month: string } {
+  const tz = "America/Sao_Paulo";
+  return {
+    day: d.toLocaleString("pt-BR", { timeZone: tz, day: "2-digit" }),
+    month: d.toLocaleString("pt-BR", { timeZone: tz, month: "short" }).replace(".", "").toUpperCase(),
+  };
+}

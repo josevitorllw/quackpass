@@ -162,3 +162,48 @@ body {
     to { opacity: 0; }
   }
 }
+
+/* ---------- Botão chamativo "Garantir ingresso" ---------- */
+.btn-cta {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  overflow: hidden;
+  border-radius: 0.9rem;
+  padding: 0.85rem 1.2rem;
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #0f172a;
+  background: linear-gradient(135deg, #fde047, #facc15 45%, #f59e0b);
+  box-shadow: 0 6px 18px -4px rgba(245, 158, 11, 0.55), inset 0 -2px 0 rgba(0, 0, 0, 0.08);
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.btn-cta:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 10px 24px -4px rgba(245, 158, 11, 0.7), inset 0 -2px 0 rgba(0, 0, 0, 0.08);
+}
+.btn-cta:active {
+  transform: translateY(0) scale(0.99);
+}
+.btn-cta:focus-visible {
+  outline: 2px solid #0f172a;
+  outline-offset: 2px;
+}
+.btn-cta::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 35%, rgba(255, 255, 255, 0.7) 50%, transparent 65%);
+  transform: translateX(-120%);
+  animation: qp-shine 3.2s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes qp-shine {
+  0%, 60% { transform: translateX(-120%); }
+  100% { transform: translateX(120%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .btn-cta::after { animation: none; }
+}
