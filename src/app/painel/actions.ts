@@ -14,6 +14,7 @@ import { sendTicketsEmail } from "@/lib/email";
 import { cancelEvent, refundOrder, RefundError } from "@/lib/orders";
 import { addNames, ListError, newAccessToken, newPublicCode } from "@/lib/guestlist";
 import { listResultMessage } from "@/lib/list-messages";
+import { assertWithinLimit, limitsFor, PlanLimitError } from "@/lib/plans";
 import bcrypt from "bcryptjs";
 import { createPagarmeRecipient } from "@/lib/payments/pagarme";
 
@@ -220,6 +221,12 @@ export async function createAdvertiser(_prev: ActionState, form: FormData): Prom
   if (commission && "error" in commission) return { error: commission.error };
   const list = parseCommission(form, "listCommission");
   if (list && "error" in list) return { error: list.error };
+  try {
+    assertWithinLimit(limitsFor(producer), "promoters", await db.advertiser.count({ where: { producerId: producer.id, active: true } }));
+  } catch (err) {
+    if (err instanceof PlanLimitError) return { error: err.message };
+    throw err;
+  }
   const clean = (k: string) => String(form.get(k) ?? "").trim() || null;
   await db.advertiser.create({
     data: {
@@ -425,6 +432,12 @@ export async function createStaff(_prev: ActionState, form: FormData): Promise<A
   const parsed = staffSchema.safeParse(Object.fromEntries(form));
   if (!parsed.success) return { error: parsed.error.issues[0].message };
   if (await db.staffMember.findUnique({ where: { login: parsed.data.login } })) return { error: "Este login já está em uso. Escolha outro." };
+  try {
+    assertWithinLimit(limitsFor(producer), "staff", await db.staffMember.count({ where: { producerId: producer.id, active: true } }));
+  } catch (err) {
+    if (err instanceof PlanLimitError) return { error: err.message };
+    throw err;
+  }
   await db.staffMember.create({
     data: { producerId: producer.id, name: parsed.data.name, login: parsed.data.login, passwordHash: await bcrypt.hash(parsed.data.password, 10) },
   });
@@ -435,7 +448,14 @@ export async function createStaff(_prev: ActionState, form: FormData): Promise<A
 export async function toggleStaff(staffId: string) {
   const producer = await requireProducer();
   const st = await db.staffMember.findFirst({ where: { id: staffId, producerId: producer.id } });
-  if (st) await db.staffMember.update({ where: { id: st.id }, data: { active: !st.active } });
+  if (!st) return;
+  if (!st.active) {
+    const limit = limitsFor(producer).staff;
+    if (limit != null && (await db.staffMember.count({ where: { producerId: producer.id, active: true } })) >= limit) {
+      redirect("/painel/plano?limite=staff");
+    }
+  }
+  await db.staffMember.update({ where: { id: st.id }, data: { active: !st.active } });
   revalidatePath("/painel/equipe");
 }
 
@@ -511,6 +531,13 @@ export async function regenerateAdvertiserLink(advertiserId: string) {
 export async function toggleAdvertiser(advertiserId: string) {
   const producer = await requireProducer();
   const adv = await db.advertiser.findFirst({ where: { id: advertiserId, producerId: producer.id } });
-  if (adv) await db.advertiser.update({ where: { id: adv.id }, data: { active: !adv.active } });
+  if (!adv) return;
+  if (!adv.active) {
+    const limit = limitsFor(producer).promoters;
+    if (limit != null && (await db.advertiser.count({ where: { producerId: producer.id, active: true } })) >= limit) {
+      redirect("/painel/plano?limite=promoters");
+    }
+  }
+  await db.advertiser.update({ where: { id: adv.id }, data: { active: !adv.active } });
   revalidatePath("/painel/anunciantes");
 }

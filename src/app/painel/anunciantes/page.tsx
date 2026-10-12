@@ -5,6 +5,7 @@ import { requireProducer } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { brl } from "@/lib/format";
 import { formatCommission } from "@/lib/pricing";
+import { limitsFor } from "@/lib/plans";
 import { CopyButton } from "@/components/CopyButton";
 import { env } from "@/lib/env";
 import { createAdvertiser, regenerateAdvertiserLink, toggleAdvertiser, updateAdvertiserCommission } from "../actions";
@@ -45,7 +46,15 @@ export default async function AdvertisersPage() {
       </div>
 
       <section className="card">
-        <h2 className="section-title mb-3">Novo anunciante</h2>
+        <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
+          <h2 className="section-title">Novo anunciante</h2>
+          <p className="text-sm text-slate-500">
+            {advertisers.filter((a) => a.active).length} de {limitsFor(producer).promoters ?? "ilimitados"} ativos no seu plano ·{" "}
+            <a href="/painel/plano" className="font-medium text-brand-700 underline">
+              meu plano
+            </a>
+          </p>
+        </div>
         <ActionForm action={createAdvertiser} className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           <div>
             <label className="label">Nome</label>

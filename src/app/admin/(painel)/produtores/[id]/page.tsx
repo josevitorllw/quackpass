@@ -8,6 +8,7 @@ import { env } from "@/lib/env";
 import { brl, dateTime } from "@/lib/format";
 import { saveProducerNotes, setProducerStatus } from "../../../actions";
 import { ProducerBadge, whatsappLink } from "../../ProducerBadge";
+import { PlanCard } from "./PlanCard";
 
 export default async function ProducerDetail({ params }: { params: { id: string } }) {
   const p = await db.producer.findUnique({
@@ -94,6 +95,8 @@ export default async function ProducerDetail({ params }: { params: { id: string 
           </ActionForm>
         </section>
       </div>
+
+      <PlanCard producer={p} />
 
       <div className="grid gap-4 sm:grid-cols-3">
         <Stat label="Vendido" value={brl(sales._sum.totalCents ?? 0)} hint={`${sales._count} pedidos`} />

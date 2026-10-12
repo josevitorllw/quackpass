@@ -1,6 +1,8 @@
 import type { Batch, TicketType } from "@prisma/client";
 import type { CheckoutTicketType } from "@/app/(site)/evento/[slug]/Checkout";
+import type { Producer } from "@prisma/client";
 import { env } from "./env";
+import { feePercentFor } from "./plans";
 import { currentBatch } from "./pricing";
 
 export function ticketTypesForCheckout(types: (TicketType & { batches: Batch[] })[]): CheckoutTicketType[] {
@@ -16,9 +18,10 @@ export function ticketTypesForCheckout(types: (TicketType & { batches: Batch[] }
   });
 }
 
-export function checkoutConfig() {
+/** Configuração do checkout. A taxa pode ser especial para a casa (definida pelo admin). */
+export function checkoutConfig(producer?: Pick<Producer, "feeBps"> | null) {
   return {
-    fee: { percent: env.platformFeePercent, minCents: env.platformFeeMinCents },
+    fee: { percent: feePercentFor(producer), minCents: env.platformFeeMinCents },
     provider: env.paymentProvider,
     pagarmePublicKey: process.env.PAGARME_PUBLIC_KEY ?? "",
   };

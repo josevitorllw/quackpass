@@ -2,6 +2,7 @@ import { ActionForm } from "@/components/ActionForm";
 import { SubmitButton } from "@/components/SubmitButton";
 import { requireProducer } from "@/lib/auth";
 import { env } from "@/lib/env";
+import { feePercentFor } from "@/lib/plans";
 import { saveBankAccount } from "../actions";
 
 export default async function AccountPage({ searchParams }: { searchParams: { erro?: string } }) {
@@ -12,7 +13,7 @@ export default async function AccountPage({ searchParams }: { searchParams: { er
         <h1 className="text-xl font-black">Recebimento</h1>
         <p className="text-sm text-slate-500">
           O valor de cada venda é dividido automaticamente (split): a sua parte vai direto para a sua conta pelo gateway de
-          pagamento, e a taxa de serviço ({env.platformFeePercent}%, mínimo de R$ {(env.platformFeeMinCents / 100).toFixed(2).replace(".", ",")}{" "}
+          pagamento, e a taxa de serviço ({feePercentFor(producer).toLocaleString("pt-BR")}%, mínimo de R$ {(env.platformFeeMinCents / 100).toFixed(2).replace(".", ",")}{" "}
           por ingresso) fica com a plataforma. Sem mensalidade.
         </p>
       </div>

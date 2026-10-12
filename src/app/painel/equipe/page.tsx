@@ -4,12 +4,15 @@ import { requireProducer } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { env } from "@/lib/env";
 import { dateTime } from "@/lib/format";
+import { limitsFor } from "@/lib/plans";
 import { createStaff, resetStaffPassword, toggleStaff } from "../actions";
 
 export default async function StaffPage() {
   const producer = await requireProducer();
   const staff = await db.staffMember.findMany({ where: { producerId: producer.id }, orderBy: { createdAt: "asc" } });
   const portariaUrl = `${env.staffUrl}/portaria`;
+  const limit = limitsFor(producer).staff;
+  const activeCount = staff.filter((s) => s.active).length;
 
   return (
     <div className="space-y-6">
@@ -22,7 +25,20 @@ export default async function StaffPage() {
       </div>
 
       <section className="card">
-        <h2 className="section-title mb-3">Novo acesso</h2>
+        <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
+          <h2 className="section-title">Novo acesso</h2>
+          <p className="text-sm text-slate-500">
+            {activeCount} de {limit ?? "ilimitados"} acessos ativos no seu plano
+            {limit != null && activeCount >= limit && (
+              <>
+                {" · "}
+                <a href="/painel/plano" className="font-medium text-brand-700 underline">
+                  liberar mais
+                </a>
+              </>
+            )}
+          </p>
+        </div>
         <ActionForm action={createStaff} className="grid gap-3 sm:grid-cols-4">
           <div>
             <label className="label" htmlFor="name">

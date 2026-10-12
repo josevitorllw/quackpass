@@ -4,7 +4,7 @@ import bcrypt from "bcryptjs";
 import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import type { ProducerStatus } from "@prisma/client";
+import type { Plan, ProducerStatus } from "@prisma/client";
 import type { ActionState } from "@/components/ActionForm";
 import { createSession, destroySession, requireAdmin } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -78,4 +78,48 @@ export async function adminRefundOrder(orderId: string, _prev: ActionState): Pro
   }
   revalidatePath("/admin/pedidos");
   return { ok: "Reembolsado" };
+}
+
+/** Plano da casa: plano contratado, demonstração Pro, ajustes de limites e taxa especial. */
+export async function setProducerPlan(producerId: string, _prev: ActionState, form: FormData): Promise<ActionState> {
+  await requireAdmin();
+  const plan = String(form.get("plan") ?? "FREE") as Plan;
+  if (!["FREE", "PLUS", "PRO"].includes(plan)) return { error: "Plano inválido" };
+
+  // Limites: vazio = padrão do plano; 0 = ilimitado
+  const limit = (k: string): number | null | "erro" => {
+    const v = String(form.get(k) ?? "").trim();
+    if (v === "") return null;
+    const n = Number(v);
+    return Number.isInteger(n) && n >= 0 && n <= 1_000_000 ? n : "erro";
+  };
+  const limitStaff = limit("limitStaff");
+  const limitPromoters = limit("limitPromoters");
+  const limitListNames = limit("limitListNames");
+  if ([limitStaff, limitPromoters, limitListNames].includes("erro")) return { error: "Limites devem ser números inteiros (0 = ilimitado)" };
+
+  // Taxa especial em %: vazio = taxa padrão da plataforma
+  const feeRaw = String(form.get("feePercent") ?? "").trim().replace(",", ".");
+  const feeBps = feeRaw === "" ? null : Math.round(Number(feeRaw) * 100);
+  if (feeBps != null && (!Number.isFinite(feeBps) || feeBps < 0 || feeBps > 3000)) return { error: "Taxa inválida (entre 0 e 30%)" };
+
+  // Demonstração Pro: N dias a partir de agora, ou encerrar
+  const trialDays = Number(String(form.get("trialDays") ?? "").trim() || 0);
+  const endTrial = form.get("endTrial") === "on";
+  const current = await db.producer.findUniqueOrThrow({ where: { id: producerId }, select: { proTrialUntil: true } });
+  const proTrialUntil = endTrial ? null : trialDays > 0 ? new Date(Date.now() + Math.min(trialDays, 365) * 86_400_000) : current.proTrialUntil;
+
+  await db.producer.update({
+    where: { id: producerId },
+    data: {
+      plan,
+      proTrialUntil,
+      limitStaff: limitStaff as number | null,
+      limitPromoters: limitPromoters as number | null,
+      limitListNames: limitListNames as number | null,
+      feeBps,
+    },
+  });
+  revalidatePath("/admin", "layout");
+  return { ok: "Plano salvo. Vale na hora para a casa." };
 }

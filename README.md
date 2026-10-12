@@ -46,6 +46,18 @@ npm run admin:create -- voce@seudominio.com.br "Seu Nome" "uma-senha-forte"
 | **Cancelamento de evento** | Para as vendas e reembolsa **todos** os compradores automaticamente (o cron termina o que faltar e tenta de novo os que falharem). Compradores recebem e-mail. Pix pago depois do cancelamento é reembolsado sozinho |
 | **Senha** | "Esqueci minha senha" com link por e-mail (vale 1 hora, uso único) |
 
+## Planos (Grátis, Plus e Pro)
+
+| | Grátis | Plus | Pro |
+|---|---|---|---|
+| Logins de portaria | 2 | 5 | ilimitado |
+| Promoters / anunciantes ativos | 3 | 10 | ilimitado |
+| Nomes na lista por evento | 200 | 1.000 | ilimitado |
+
+- Os limites padrão ficam em `src/lib/plans.ts`.
+- Em **Admin → Produtores → (casa) → Plano** você escolhe o plano, **libera o Pro completo por X dias** (demonstração; depois volta sozinho ao plano contratado), ajusta qualquer limite só para aquela casa (vazio = padrão, 0 = ilimitado) e define uma **taxa especial**.
+- A casa vê o uso e o que o Pro libera em **Painel → Meu plano**. Ao bater um limite, recebe um aviso para falar com a Quackpass. Nada é apagado ao mudar de plano: só não dá para adicionar mais.
+
 ## Modelo de cobrança
 
 - Taxa de serviço: `PLATFORM_FEE_PERCENT` (padrão **10%**) com mínimo de `PLATFORM_FEE_MIN_CENTS` (padrão **R$ 3,00**) por ingresso pago. Ingresso gratuito não paga taxa.

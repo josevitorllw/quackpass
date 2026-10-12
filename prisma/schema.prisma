@@ -33,6 +33,13 @@ enum DiscountType {
   FIXED
 }
 
+/// Plano da casa. Os limites de cada plano ficam em src/lib/plans.ts e podem ser ajustados por casa.
+enum Plan {
+  FREE
+  PLUS
+  PRO
+}
+
 /// Cadastro de produtor: só vende depois de aprovado pelo dono da plataforma
 enum ProducerStatus {
   PENDING
@@ -88,6 +95,16 @@ model Producer {
   message      String?
   /// Anotações internas do dono da plataforma (o produtor não vê)
   adminNotes   String   @default("")
+
+  plan         Plan      @default(FREE)
+  /// Pro completo liberado até esta data (demonstração). Depois volta para o plano acima.
+  proTrialUntil DateTime?
+  /// Ajustes só desta casa (vazio = padrão do plano; 0 = ilimitado)
+  limitStaff      Int?
+  limitPromoters  Int?
+  limitListNames  Int?
+  /// Taxa especial em centésimos de % (800 = 8%). Vazio = taxa padrão da plataforma.
+  feeBps          Int?
   reviewedAt   DateTime?
   email        String   @unique
   passwordHash String

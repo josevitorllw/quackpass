@@ -3,6 +3,8 @@ import { AreaHeader } from "@/components/AreaHeader";
 import { DuckSplash } from "@/components/DuckSplash";
 import { requireProducer } from "@/lib/auth";
 import { env } from "@/lib/env";
+import { dateTime } from "@/lib/format";
+import { isTrialActive, PLAN_LABEL } from "@/lib/plans";
 import { splashPending } from "@/lib/splash";
 import { logout } from "../produtor/actions";
 
@@ -14,6 +16,7 @@ const NAV = [
   ["/painel/anunciantes", "Anunciantes"],
   ["/painel/equipe", "Portaria"],
   ["/painel/conta", "Recebimento"],
+  ["/painel/plano", "Meu plano"],
 ] as const;
 
 export default async function PanelLayout({ children }: { children: React.ReactNode }) {
@@ -38,6 +41,12 @@ export default async function PanelLayout({ children }: { children: React.ReactN
         <p className="mb-4 text-sm text-slate-500">
           Olá, <b className="text-slate-800">{producer.contactName || producer.name}</b> · {producer.name}
         </p>
+        {isTrialActive(producer) && producer.proTrialUntil && (
+          <Link href="/painel/plano" className="card mb-6 block border-brand-200 bg-brand-50 text-sm">
+            ⭐ Você está com o <b>Pro completo liberado</b> até {dateTime(producer.proTrialUntil)}. Depois disso a sua casa volta para o plano{" "}
+            {PLAN_LABEL[producer.plan]}. Ver detalhes →
+          </Link>
+        )}
         {!producer.recipientId && (
           <Link href="/painel/conta" className="card mb-6 block border-brand-200 bg-brand-50 text-sm">
             ⚠️ Cadastre sua conta bancária para começar a receber pelas vendas →

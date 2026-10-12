@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Prisma, ProducerStatus } from "@prisma/client";
 import { db } from "@/lib/db";
 import { dateTime } from "@/lib/format";
+import { effectivePlan, isTrialActive, PLAN_LABEL } from "@/lib/plans";
 import { ProducerBadge, whatsappLink } from "../ProducerBadge";
 
 const FILTERS: [string, string][] = [
@@ -59,6 +60,7 @@ export default async function ProducersPage({ searchParams }: { searchParams: { 
               <th>Cidade</th>
               <th>Cadastro</th>
               <th>Status</th>
+              <th>Plano</th>
               <th></th>
             </tr>
           </thead>
@@ -82,6 +84,10 @@ export default async function ProducersPage({ searchParams }: { searchParams: { 
                 <td>
                   <ProducerBadge status={p.status} />
                 </td>
+                <td className="whitespace-nowrap text-sm">
+                  {PLAN_LABEL[effectivePlan(p)]}
+                  {isTrialActive(p) && <span className="ml-1 badge bg-brand-100 text-brand-800">demonstração</span>}
+                </td>
                 <td className="whitespace-nowrap text-right">
                   <a
                     href={whatsappLink(p.phone, `Olá, ${p.contactName.split(" ")[0]}! Aqui é da Quackpass, recebemos o cadastro da ${p.name}.`)}
@@ -96,7 +102,7 @@ export default async function ProducersPage({ searchParams }: { searchParams: { 
             ))}
             {producers.length === 0 && (
               <tr>
-                <td colSpan={6} className="text-center text-slate-500">
+                <td colSpan={7} className="text-center text-slate-500">
                   Nenhum produtor
                 </td>
               </tr>

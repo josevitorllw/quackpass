@@ -1,6 +1,7 @@
 import { randomBytes } from "crypto";
 import { Prisma, type Advertiser, type DoorPaymentMethod, type Event } from "@prisma/client";
 import { db } from "./db";
+import { limitsFor } from "./plans";
 import { slugify } from "./format";
 
 /** Nome para busca/duplicados: sem acento, minúsculo, espaços simples. */
@@ -50,7 +51,7 @@ export async function addNames(opts: {
   source: "PROMOTER" | "PUBLIC" | "PRODUCER";
   phone?: string | null;
 }) {
-  const event = await db.event.findUnique({ where: { id: opts.eventId }, include: { producer: { select: { status: true } } } });
+  const event = await db.event.findUnique({ where: { id: opts.eventId }, include: { producer: true } });
   if (!event || event.producer.status !== "APPROVED") throw new ListError("Evento não encontrado");
   const status = listOpen(event);
   if (!status.open) throw new ListError(status.reason);
@@ -68,6 +69,20 @@ export async function addNames(opts: {
   return db.$transaction(
     async (tx) => {
       let entries = Array.from(unique.entries());
+      // Limite do plano da casa: total de nomes na lista do evento
+      const planLimit = limitsFor(event.producer).listNames;
+      if (planLimit != null) {
+        const total = await tx.guestListEntry.count({ where: { eventId: event.id } });
+        const room = Math.max(0, planLimit - total);
+        if (room === 0) {
+          throw new ListError(
+            opts.source === "PRODUCER"
+              ? `A lista chegou ao limite do seu plano (${planLimit} nomes por evento). Para liberar mais, veja "Meu plano".`
+              : "A lista deste evento está cheia",
+          );
+        }
+        entries = entries.slice(0, room);
+      }
       if (opts.advertiserId && event.listMaxPerPromoter) {
         const current = await tx.guestListEntry.count({ where: { eventId: event.id, advertiserId: opts.advertiserId } });
         const room = Math.max(0, event.listMaxPerPromoter - current);

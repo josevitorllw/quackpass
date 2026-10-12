@@ -27,7 +27,7 @@ export default async function PreviewPage({ params }: { params: { id: string } }
       }
       sidebar={
         <Suspense>
-          <Checkout eventId={event.id} ticketTypes={ticketTypesForCheckout(types)} feePayer={event.feePayer} {...checkoutConfig()} preview />
+          <Checkout eventId={event.id} ticketTypes={ticketTypesForCheckout(types)} feePayer={event.feePayer} {...checkoutConfig(producer)} preview />
         </Suspense>
       }
     />

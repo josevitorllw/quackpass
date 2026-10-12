@@ -5,6 +5,7 @@ import { env } from "./env";
 import { safely, sendRefundEmail, sendTicketsEmail } from "./email";
 import { onlyDigits } from "./format";
 import { paymentProvider, type CardInput } from "./payments";
+import { feePercentFor } from "./plans";
 import { calculateCommission, calculatePricing, currentBatch, type CartLine } from "./pricing";
 import { newTicketCode } from "./tickets";
 
@@ -78,7 +79,7 @@ export async function createOrder(input: CheckoutInput) {
   const coupon = input.couponCode ? await findValidCoupon(event.id, input.couponCode) : null;
   if (input.couponCode && !coupon) throw new CheckoutError("Cupom inválido ou esgotado");
 
-  const pricing = calculatePricing(lines, coupon, event.feePayer);
+  const pricing = calculatePricing(lines, coupon, event.feePayer, { percent: feePercentFor(event.producer), minCents: env.platformFeeMinCents });
   // Comissão do anunciante: a do cupom, se definida; senão a padrão do anunciante
   const commission = coupon?.advertiser
     ? coupon.commissionType != null && coupon.commissionValue != null

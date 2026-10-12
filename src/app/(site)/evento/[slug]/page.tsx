@@ -22,7 +22,7 @@ async function getEvent(slug: string) {
   return db.event.findUnique({
     where: { slug },
     include: {
-      producer: { select: { name: true, status: true } },
+      producer: { select: { name: true, status: true, feeBps: true } },
       ticketTypes: { where: { active: true }, orderBy: { sortOrder: "asc" }, include: { batches: true } },
     },
   });
@@ -53,7 +53,7 @@ export default async function EventPage({ params }: { params: { slug: string } }
         <>
           {salesOpen ? (
             <Suspense fallback={<div className="card h-64 animate-pulse" />}>
-              <Checkout eventId={event.id} ticketTypes={ticketTypesForCheckout(event.ticketTypes)} feePayer={event.feePayer} {...checkoutConfig()} />
+              <Checkout eventId={event.id} ticketTypes={ticketTypesForCheckout(event.ticketTypes)} feePayer={event.feePayer} {...checkoutConfig(event.producer)} />
             </Suspense>
           ) : (
             <div className="card text-slate-600">{ended ? "As vendas deste evento foram encerradas." : "Vendas indisponíveis."}</div>
