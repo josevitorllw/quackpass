@@ -55,6 +55,10 @@ export default async function AdvertisersPage() {
             </a>
           </p>
         </div>
+        <p className="mb-3 rounded-lg bg-brand-50 px-3 py-2 text-sm text-slate-700">
+          A comissão aqui é o valor que <strong>a sua casa paga ao promoter</strong> pelas vendas dele. Ela não muda a taxa de serviço do
+          Quackpass, que é definida pela plataforma.
+        </p>
         <ActionForm action={createAdvertiser} className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           <div>
             <label className="label">Nome</label>
@@ -72,8 +76,8 @@ export default async function AdvertisersPage() {
             <label className="label">E-mail (opcional)</label>
             <input name="email" type="email" className="input" />
           </div>
-          <CommissionFields placeholder="Ex.: 10 (vazio = sem comissão)" label="Comissão nas vendas pelo site" />
-          <CommissionFields prefix="listCommission" placeholder="Ex.: 3 (vazio = mesma do site)" label="Comissão na lista / porta" defaultType="FIXED" />
+          <CommissionFields placeholder="Ex.: 10 (vazio = sem comissão)" label="Comissão do promoter (vendas pelo site)" />
+          <CommissionFields prefix="listCommission" placeholder="Ex.: 3 (vazio = mesma do site)" label="Comissão do promoter (lista / porta)" defaultType="FIXED" />
           <div className="flex items-end">
             <SubmitButton className="btn-primary w-full">Cadastrar</SubmitButton>
           </div>

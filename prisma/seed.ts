@@ -92,14 +92,6 @@ async function main() {
             { name: "MC Convidado", detail: "02h" },
           ],
         },
-        {
-          type: "faq",
-          title: "Perguntas frequentes",
-          items: [
-            { q: "Qual a idade mínima?", a: "18 anos, com documento oficial com foto." },
-            { q: "Tem estacionamento?", a: "Sim, conveniado ao lado da casa." },
-          ],
-        },
       ],
       ticketTypes: {
         create: [

@@ -29,7 +29,7 @@ export default function ForProducers() {
         {[
           ["Sem mensalidade", `Taxa de ${fee} por ingresso vendido (mínimo de R$ ${(env.platformFeeMinCents / 100).toFixed(2).replace(".", ",")}). Você escolhe se repassa a taxa ao comprador.`],
           ["Dinheiro direto na sua conta", "O pagamento é dividido automaticamente: a sua parte vai para a sua conta bancária."],
-          ["Página do seu jeito", "Fotos, textos, atrações, vídeo, perguntas frequentes e a cor da sua marca."],
+          ["Página do seu jeito", "Fotos, textos, atrações, vídeo e a cor da sua marca."],
           ["Promoters com comissão", "Cupom para cada promoter, com comissão configurável e relatório de quanto cada um vendeu."],
           ["Lotes automáticos", "Quando um lote esgota ou vence, o próximo abre sozinho."],
           ["Check-in pelo celular", "Sua equipe valida os QR Codes na porta pela câmera do celular, sem app."],

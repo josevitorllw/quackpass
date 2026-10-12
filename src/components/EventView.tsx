@@ -219,22 +219,5 @@ function BlockView({ block }: { block: Block }) {
         />
       );
     }
-    case "faq":
-      return (
-        <section className="space-y-3">
-          <h2 className="section-title">{block.title}</h2>
-          <div className="divide-y divide-slate-100 rounded-xl border border-slate-200 bg-white">
-            {block.items.map((it, i) => (
-              <details key={i} className="group px-4 py-3">
-                <summary className="cursor-pointer list-none font-semibold marker:hidden">
-                  <span className="mr-2 inline-block text-[var(--accent-ink)] transition group-open:rotate-90">›</span>
-                  {it.q}
-                </summary>
-                <RichText text={it.a} className="mt-2 pl-5 text-sm text-slate-600" />
-              </details>
-            ))}
-          </div>
-        </section>
-      );
   }
 }

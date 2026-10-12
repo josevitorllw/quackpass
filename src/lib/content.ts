@@ -14,11 +14,6 @@ export const blockSchema = z.discriminatedUnion("type", [
     items: z.array(z.object({ name: z.string().max(120), detail: z.string().max(120).default("") })).max(40),
   }),
   z.object({ type: z.literal("video"), url: z.string().trim().max(300) }),
-  z.object({
-    type: z.literal("faq"),
-    title: z.string().max(120).default("Perguntas frequentes"),
-    items: z.array(z.object({ q: z.string().max(200), a: z.string().max(2000) })).max(30),
-  }),
 ]);
 
 export type Block = z.infer<typeof blockSchema>;
@@ -26,9 +21,13 @@ export type BlockType = Block["type"];
 
 export const contentSchema = z.array(blockSchema).max(40);
 
+/** Ignora blocos inválidos ou de tipos que não existem mais (ex.: o antigo "perguntas frequentes"). */
 export function parseContent(raw: unknown): Block[] {
-  const parsed = contentSchema.safeParse(raw);
-  return parsed.success ? parsed.data : [];
+  if (!Array.isArray(raw)) return [];
+  return raw.flatMap((b) => {
+    const parsed = blockSchema.safeParse(b);
+    return parsed.success ? [parsed.data] : [];
+  }).slice(0, 40);
 }
 
 /** Aceita links do YouTube (watch, youtu.be, shorts) e devolve a URL de embed. */

@@ -11,7 +11,6 @@ const LABELS: Record<BlockType, string> = {
   gallery: "Galeria de fotos",
   lineup: "Atrações / line-up",
   video: "Vídeo do YouTube",
-  faq: "Perguntas frequentes",
 };
 
 const EMPTY: Record<BlockType, () => Block> = {
@@ -20,7 +19,6 @@ const EMPTY: Record<BlockType, () => Block> = {
   gallery: () => ({ type: "gallery", title: "Fotos", images: [] }),
   lineup: () => ({ type: "lineup", title: "Atrações", items: [{ name: "", detail: "" }] }),
   video: () => ({ type: "video", url: "" }),
-  faq: () => ({ type: "faq", title: "Perguntas frequentes", items: [{ q: "", a: "" }] }),
 };
 
 /** Editor dos blocos da página do evento. Salva tudo como JSON num input escondido. */
@@ -44,10 +42,9 @@ export function BlocksEditor({ name, initial }: { name: string; initial: Block[]
     if (b.type === "image" || b.type === "video") return b.url.trim();
     if (b.type === "gallery") return b.images.length > 0;
     if (b.type === "lineup") return b.items.some((i) => i.name.trim());
-    if (b.type === "faq") return b.items.some((i) => i.q.trim());
     return true;
   }).map((b) =>
-    b.type === "lineup" ? { ...b, items: b.items.filter((i) => i.name.trim()) } : b.type === "faq" ? { ...b, items: b.items.filter((i) => i.q.trim()) } : b,
+    b.type === "lineup" ? { ...b, items: b.items.filter((i) => i.name.trim()) } : b,
   );
 
   return (
@@ -55,7 +52,7 @@ export function BlocksEditor({ name, initial }: { name: string; initial: Block[]
       <input type="hidden" name={name} value={JSON.stringify(clean)} />
       {blocks.length === 0 && (
         <p className="rounded-xl border border-dashed border-slate-300 p-4 text-center text-sm text-slate-500">
-          Monte a página do seu evento adicionando blocos abaixo: textos, fotos, atrações, vídeo e perguntas frequentes.
+          Monte a página do seu evento adicionando blocos abaixo: textos, fotos, atrações e vídeo.
         </p>
       )}
       {blocks.map((b, i) => (
@@ -137,26 +134,6 @@ function BlockFields({ block: b, onChange }: { block: Block; onChange: (b: Block
       );
     case "video":
       return <input className="input" placeholder="Link do YouTube (ex.: https://youtu.be/...)" value={b.url} onChange={(e) => onChange({ ...b, url: e.target.value })} />;
-    case "faq":
-      return (
-        <>
-          <input className="input" placeholder="Título" value={b.title} onChange={(e) => onChange({ ...b, title: e.target.value })} />
-          {b.items.map((it, i) => (
-            <div key={i} className="space-y-2 rounded-lg bg-slate-50 p-2">
-              <div className="flex gap-2">
-                <input className="input" placeholder="Pergunta" value={it.q} onChange={(e) => onChange({ ...b, items: b.items.map((x, j) => (j === i ? { ...x, q: e.target.value } : x)) })} />
-                <IconBtn label="Remover" onClick={() => onChange({ ...b, items: b.items.filter((_, j) => j !== i) })}>
-                  ✕
-                </IconBtn>
-              </div>
-              <textarea className="input" placeholder="Resposta" value={it.a} onChange={(e) => onChange({ ...b, items: b.items.map((x, j) => (j === i ? { ...x, a: e.target.value } : x)) })} />
-            </div>
-          ))}
-          <button type="button" className="text-sm font-medium text-brand-700" onClick={() => onChange({ ...b, items: [...b.items, { q: "", a: "" }] })}>
-            + Adicionar pergunta
-          </button>
-        </>
-      );
   }
 }
 
